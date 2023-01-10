@@ -1,0 +1,135 @@
+sqlite3 C:\sqlite\db\DBPrograma_Ayuda_Clubes_FIFA.db
+.mode csv
+
+.import C:\\sqlite\\db\\csv\\dataset_Personas.csv Persona
+.import C:\\sqlite\\db\\csv\\dataset_FIFA.csv FIFA
+.import C:\\sqlite\\db\\csv\\dataset_Confederaciones.csv Confederacion
+.import C:\\sqlite\\db\\csv\\dataset_Club.csv Club
+.import C:\\sqlite\\db\\csv\\dataset_Empleados.csv Empleado
+.import C:\\sqlite\\db\\csv\\dataset_AgentesFinanciero.csv AgFinanciero
+.import C:\\sqlite\\db\\csv\\dataset_Directivos.csv Directivo
+.import C:\\sqlite\\db\\csv\\dataset_Usuarios.csv Usuario
+.import C:\\sqlite\\db\\csv\\dataset_Continentes.csv Continente
+.import C:\\sqlite\\db\\csv\\dataset_Paises.csv Pais
+.import C:\\sqlite\\db\\csv\\dataset_Seleccion.csv Seleccion
+.import C:\\sqlite\\db\\csv\\dataset_JugadorConvocado.csv JugConvocado
+.import C:\\sqlite\\db\\csv\\dataset_Mundial.csv Mundial
+.import C:\\sqlite\\db\\csv\\dataset_Parametros.csv Parametro
+.import C:\\sqlite\\db\\csv\\dataset_ClubJugador.csv ClubJugador
+
+.tables
+.header on
+.mode column
+.width 20, 20, 20, 20, 20, 20
+
+1. Mostrar todos los jugadores, el club y la seleccion a la que pertenecen
+select jug.VarIdP IDJugador,
+       p.VarNmP NombreJugador,
+       c.VarNmClub NumeroClub,
+       s.VarNmSeleccion Seleccion
+from Seleccion s
+inner join JugConvocado jug on s.VarIdSeleccion = jug.VarIdSeleccion
+inner join Persona p on jug.VarIdP=p.VarIdP
+inner join ClubJugador cJ on p.VarIdP = cJ.VarIdP
+inner join Club c on cJ.VarIdClub=c.VarIdClub;
+
+2. Numero de jugadores que hay en cada continente
+select contin.VarNmContin Continente,
+       count(jug.VarIdP) Numero_Jugadores
+from Continente contin
+inner join Pais p on contin.VarIdContin=p.VarIdContin
+inner join Seleccion s on p.VarIdPais=s.VarIdPais
+inner join JugConvocado jug on s.VarIdSeleccion=jug.VarIdSeleccion
+group by contin.VarNmContin;
+
+3. Mostrar los jugadores que tengan su nombre que empiece por 'Bra' y hayan pasado
+más de 10 díaz
+select  jug.VarIdP ID_Jugador,
+       p.VarNmP Nombre_Jugador,
+       jug.IntDyMundialJc Dias_Mundial,
+       s.VarNmSeleccion Seleccion
+from Seleccion s
+inner join JugConvocado jug on s.VarIdSeleccion=jug.VarIdSeleccion
+inner join Persona p on jug.VarIdP=p.VarIdP
+where p.VarNmP like 'Bra%' and jug.IntDyMundialJc>10;
+
+4. Mostrar cuántos jugadores hay en el ecuador que haya pasado más de 20 días en el
+mundial
+select p.VarNmPais Pais,
+       count(jug.VarIdP) Total_Jugadores,
+       jug.IntDyMundialJc Dias_Mundial
+from Pais p
+inner join Seleccion s on p.VarIdPais = s.VarIdPais
+inner join JugConvocado jug on s.VarIdSeleccion = jug.VarIdSeleccion
+inner join Persona pe on jug.VarIdP = pe.VarIdP
+where p.VarNmPais like 'Ecuador' and jug.IntDyMundialJc>20;
+
+5. Número total de jugadores que pertenecen a cada seleccion
+select s.VarNmSeleccion,
+       count(jug.VarIdP)
+from Seleccion s
+inner join JugConvocado jug on s.VarIdSeleccion=jug.VarIdSeleccion
+inner join Persona P on jug.VarIdP=p.VarIdP
+group by s.VarNmSeleccion;
+
+6. Número de empleados de género femenino que hay en los agentes financieros
+select count(ag.VarIdP) NumeroPersonas,
+       P.VarGenderP Genero
+from AgFinanciero ag 
+inner join Empleado e on ag.VarIdP=e.VarIdP
+inner join Persona p on e.VarIdP=p.VarIdP
+where p.VarGenderP like 'F';
+
+7. Mostrar cuántos usuarios son de género masculino, femenino y no binario.
+select p.VarGenderP Genero,
+       count(u.VarIdP) NumeroUsuarios
+from Usuario u
+inner join Empleado e on e.VarIdP=u.VarIdP
+inner join Persona p on e.VarIdP=p.VarIdP
+group by p.VarGenderP;
+
+8. Jugadores que han asistido al mundial 23 o más dias por cada continente
+select p.VarNmPais Pais,
+       count(jug.VarIdP) Total_Jugadores,
+       jug.IntDyMundialJc Dias_Mundial
+from Pais p
+inner join Seleccion s on p.VarIdPais = s.VarIdPais
+inner join JugConvocado jug on s.VarIdSeleccion = jug.VarIdSeleccion
+inner join Persona pe on jug.VarIdP = pe.VarIdP
+group by p.VarNmPais
+having jug.IntDyMundialJc>23;
+
+9. Primer registro de las cofederaciones.
+select conf.VarNmConf Confederacion,
+       max(jug.VarIdP) PrimerRegistro,
+       p.VarNmP Nombre
+from ClubJugador cJ
+inner join JugConvocado jug on cj.VarIdP=jug.VarIdP
+inner join Persona p on jug.VarIdP=p.VarIdP
+inner join Club c on cJ.VarIdClub=c.VarIdClub
+inner join Confederacion conf on c.VarIdConf=conf.VarIdConf
+group by conf.VarNmConf;
+
+10.Cinco primeros empleados directivos que ganer $4000
+select p.VarNmP Nombre,
+       e.IntSalEm Salario
+from Directivo d 
+inner join Empleado e on d.VarIdP=e.VarIdP
+inner join Persona p on e.VarIdP=p.VarIdP
+group by p.VarNmP
+having e.IntSalEm=4000
+limit 5;
+
+11. Los 10 primeros empleados directivos que tengan su rango mayor o igual a 3
+select p.VarNmP Nombre, 
+       d.IntRngDir Rango
+from Directivo d
+inner join Empleado e on d.VarIdP=e.VarIdP
+inner join Persona p on e.VarIdP=p.VarIdP
+group by p.VarNmP
+having d.IntRngDir>=3
+limit 10;
+
+
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
